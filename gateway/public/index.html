@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test Gateway</title></head>
+<body>
+  <h1>Test d'envoi de message</h1>
+  <p id="status">Connexion en cours...</p>
+
+  <div>
+    <input id="recipientId" placeholder="ID du destinataire" style="width: 300px">
+    <br><br>
+    <input id="text" placeholder="Ton message" style="width: 300px">
+    <br><br>
+    <input id="sourceLang" placeholder="Langue source (ex: fr)" value="fr">
+    <br><br>
+    <button onclick="sendMessage()">Envoyer</button>
+  </div>
+
+  <p id="result"></p>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script>
+    const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzYjk0NTdlNy1iNDNmLTQxNDItYjE3MC1mMjNlNzg2NTQwZWMiLCJlbWFpbCI6InByb2ZAZXhhbXBsZS5jb20iLCJpYXQiOjE3ODg5ODQ0NTQsImV4cCI6MTc4ODk4NTM1NH0.gYEgQGS7YDCSVYIsu-ppoxFeWz21WbLRbdqOFdB1ADo";
+
+    const socket = io('http://localhost:4001', {
+      auth: { token: TOKEN }
+    });
+
+    socket.on('connect', () => {
+      document.getElementById('status').innerText = 'Connecté ! ID : ' + socket.id;
+    });
+
+    socket.on('connect_error', (err) => {
+      document.getElementById('status').innerText = 'Erreur de connexion : ' + err.message;
+    });
+
+    socket.on('message_sent', (response) => {
+      document.getElementById('result').innerText = 'Résultat : ' + JSON.stringify(response);
+    });
+
+    function sendMessage() {
+      const recipientId = document.getElementById('recipientId').value;
+      const text = document.getElementById('text').value;
+      const sourceLang = document.getElementById('sourceLang').value;
+
+      socket.emit('send_message', {
+        conversationId: 'conv-test-1',
+        recipientId,
+        text,
+        sourceLang,
+      });
+    }
+  </script>
+</body>
+</html>
