@@ -2,6 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const { createAdapter } = require('@socket.io/redis-adapter');
+const { createClient } = require('redis');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { connectProducer, publishMessage } = require('./kafkaProducer');
@@ -23,7 +25,6 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
-// Middleware d'authentification
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
 
@@ -44,7 +45,6 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   console.log(`Utilisateur connecté : ${socket.userEmail} (${socket.userId}), socket ${socket.id}`);
 
-  // Chaque utilisateur rejoint une "room" nommée par son propre id
   socket.join(socket.userId);
 
   socket.on('send_message', async (data) => {
@@ -76,8 +76,16 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 4001;
 
 async function start() {
+  const pubClient = createClient({ url: process.env.REDIS_URL });
+  const subClient = pubClient.duplicate();
+
+  await Promise.all([pubClient.connect(), subClient.connect()]);
+  io.adapter(createAdapter(pubClient, subClient));
+  console.log('Adapter Redis branché sur Socket.IO');
+
   await connectProducer();
   await startConsumer(io);
+
   httpServer.listen(PORT, () => {
     console.log(`Gateway WebSocket démarré sur le port ${PORT}`);
   });
