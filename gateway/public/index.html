@@ -19,7 +19,7 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
   <script>
-    const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI4NDAzZmMzMC03NWEwLTQ4YWYtYjIyOC05OWJhMjE4NjViYjkiLCJlbWFpbCI6ImVsZXZlQGV4YW1wbGUuY29tIiwiaWF0IjoxNzg4OTg3MjE1LCJleHAiOjE3ODg5ODgxMTV9.m_BLu9E-rLVf_Z5qrHEbgjQmEXdut3bysUYflfOIR_I";
+    const TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIzYjk0NTdlNy1iNDNmLTQxNDItYjE3MC1mMjNlNzg2NTQwZWMiLCJlbWFpbCI6InByb2ZAZXhhbXBsZS5jb20iLCJpYXQiOjE3ODkwNzI5MjYsImV4cCI6MTc4OTA3MzgyNn0.52jdpoOoAJMLcEpt-h8F3fQrZx70gHpMd_moi4G2xJo";
 
     const socket = io('http://localhost:4001', {
       auth: { token: TOKEN }
@@ -36,6 +36,17 @@
     socket.on('message_sent', (response) => {
       document.getElementById('result').innerText = 'Résultat : ' + JSON.stringify(response);
     });
+
+    socket.on('receive_message', (data) => {
+  const received = document.getElementById('received') || (() => {
+    const p = document.createElement('p');
+    p.id = 'received';
+    document.body.appendChild(p);
+    return p;
+  })();
+  received.innerText = 'MESSAGE REÇU : ' + data.translatedText + ' (traduit depuis: ' + data.text + ')';
+  console.log('Message reçu:', data);
+});
 
     function sendMessage() {
       const recipientId = document.getElementById('recipientId').value;

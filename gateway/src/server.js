@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { connectProducer, publishMessage } = require('./kafkaProducer');
+const { startConsumer } = require('./kafkaConsumer');
 
 const app = express();
 app.use(cors());
@@ -43,6 +44,9 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   console.log(`Utilisateur connecté : ${socket.userEmail} (${socket.userId}), socket ${socket.id}`);
 
+  // Chaque utilisateur rejoint une "room" nommée par son propre id
+  socket.join(socket.userId);
+
   socket.on('send_message', async (data) => {
     try {
       const message = {
@@ -73,6 +77,7 @@ const PORT = process.env.PORT || 4001;
 
 async function start() {
   await connectProducer();
+  await startConsumer(io);
   httpServer.listen(PORT, () => {
     console.log(`Gateway WebSocket démarré sur le port ${PORT}`);
   });
