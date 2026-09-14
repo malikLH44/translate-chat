@@ -12,12 +12,12 @@ async function connectProducer() {
   console.log('Producteur Kafka connecté');
 }
 
-async function publishMessage(topic, message) {
+async function publishMessage(topic, key, message) {
   await producer.send({
     topic,
     messages: [
       {
-        key: message.conversationId,
+        key,
         value: JSON.stringify(message),
       },
     ],

@@ -99,4 +99,17 @@ async function me(req, res) {
   }
 }
 
-module.exports = { signup, login, me };
+async function listUsers(req, res) {
+  try {
+    const result = await pool.query(
+      'SELECT id, email, preferred_language FROM users WHERE id != $1 ORDER BY email',
+      [req.userId]
+    );
+    return res.json({ users: result.rows });
+  } catch (err) {
+    console.error('Erreur listUsers:', err);
+    return res.status(500).json({ error: 'Erreur serveur' });
+  }
+}
+
+module.exports = { signup, login, me, listUsers };

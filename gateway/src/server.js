@@ -8,6 +8,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const { connectProducer, publishMessage } = require('./kafkaProducer');
 const { startConsumer } = require('./kafkaConsumer');
+const messagesRoutes = require('./messagesRoutes');
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,8 @@ const io = new Server(httpServer, {
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
+
+app.use('/messages', messagesRoutes);
 
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
@@ -49,8 +52,10 @@ io.on('connection', (socket) => {
 
   socket.on('send_message', async (data) => {
     try {
+      const pairKey = [socket.userId, data.recipientId].sort().join('_');
+
       const message = {
-        conversationId: data.conversationId,
+        pairKey,
         senderId: socket.userId,
         recipientId: data.recipientId,
         text: data.text,
@@ -58,7 +63,7 @@ io.on('connection', (socket) => {
         timestamp: Date.now(),
       };
 
-      await publishMessage('chat.messages.raw', message);
+      await publishMessage('chat.messages.raw', pairKey, message);
       console.log('Message publié sur Kafka :', message);
 
       socket.emit('message_sent', { status: 'ok', message });
