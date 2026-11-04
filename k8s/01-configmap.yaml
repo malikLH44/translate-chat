@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: kafka-chat
+data:
+  POSTGRES_DB: chatdb
+  KAFKA_BROKER: kafka:9092
+  REDIS_URL: redis://redis:6379
+  LIBRETRANSLATE_URL: http://libretranslate:5000
+  JWT_ACCESS_EXPIRES_IN: 15m
+  JWT_REFRESH_EXPIRES_IN: 7d
