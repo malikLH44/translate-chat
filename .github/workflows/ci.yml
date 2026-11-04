@@ -1,4 +1,4 @@
-name: CI - Build and Push Docker Images
+name: CI - Test, Build and Push Docker Images
 
 on:
   push:
@@ -9,7 +9,33 @@ permissions:
   packages: write
 
 jobs:
+  test:
+    name: Tests (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [auth-service, gateway, translation-worker]
+    defaults:
+      run:
+        working-directory: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ${{ matrix.service }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
   build-auth-service:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +62,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-gateway:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -62,10 +89,11 @@ jobs:
           cache-to: type=gha,mode=max
 
   build-translation-worker:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Lowercase repository owner
         run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
         env:
@@ -83,15 +111,16 @@ jobs:
         with:
           context: ./translation-worker
           push: true
-          tags: ghcr.io/${{ env.OWNER_LC }}/kafka-translate-translation-worker:${{ github.sha }}
+          tags: ghcr.io/${{ env.OWNER_LC }}/kafka-translate-worker:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   build-frontend:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Lowercase repository owner
         run: echo "OWNER_LC=${OWNER,,}" >> "$GITHUB_ENV"
         env:
