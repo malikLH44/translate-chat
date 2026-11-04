@@ -26,7 +26,7 @@ async function signup(req, res) {
 
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
-      return res.status(200).json({ error: 'Un compte existe déjà avec cet email' });
+      return res.status(409).json({ error: 'Un compte existe déjà avec cet email' });
     }
 
     const passwordHash = await argon2.hash(password);
